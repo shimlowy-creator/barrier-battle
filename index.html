@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Barrier Battle Protection is Power</title>
+<style>
+  :root{
+    --bg:#f7fbff;
+    --panel:#ffffff;
+    --accent:#4b9cff;
+    --accent2:#ff7fb2;
+    --good:#38c172;
+    --bad:#ff6b6b;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  body{ margin:0; padding:0; background:linear-gradient(180deg,var(--bg),#eaf4ff); display:flex; align-items:center; justify-content:center; min-height:100vh; }
+  .wrap{ width:960px; max-width:96%; background:var(--panel); border-radius:16px; box-shadow: 0 10px 30px rgba(20,40,60,0.12); overflow:hidden; position:relative; }
+  header{ display:flex; align-items:center; gap:20px; padding:18px 22px; border-bottom:1px solid rgba(10,30,60,0.04); }
+  .logo{ width:80px; height:80px; display:flex; align-items:center; justify-content:center; border-radius:12px; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:white; font-weight:700; font-size:20px; box-shadow:0 6px 18px rgba(75,156,255,0.28); }
+  .titlebox h1{ margin:0; font-size:20px; letter-spacing:-0.2px; }
+  .titlebox p{ margin:2px 0 0 0; font-size:13px; color:#234; opacity:0.9; }
+  main{ display:flex; gap:18px; padding:18px; }
+  .game { flex:1; display:flex; flex-direction:column; gap:12px; align-items:center; }
+  canvas{ background: linear-gradient(180deg,#dff1ff,#ffffff); border-radius:12px; box-shadow: inset 0 2px 6px rgba(0,0,0,0.03); }
+  .hud{ display:flex; gap:12px; align-items:center; width:100%; justify-content:space-between; }
+  .stats{ display:flex; gap:10px; align-items:center; }
+  .stat{ background:#fff; padding:8px 12px; border-radius:10px; box-shadow:0 2px 8px rgba(10,40,80,0.06); font-weight:600; }
+  .controls{ font-size:13px; color:#123; opacity:0.9; }
+  .side{ width:320px; max-width:34%; }
+  .panel{ background:linear-gradient(180deg,#ffffff,#fbfcff); padding:14px; border-radius:12px; box-shadow:0 8px 24px rgba(10,30,60,0.04); }
+  .panel h2{ margin:0 0 8px 0; font-size:16px; }
+  .slogan{ background:linear-gradient(90deg,var(--accent),var(--accent2)); color:white; padding:8px 12px; border-radius:10px; display:inline-block; font-weight:700; margin-bottom:10px; }
+  .fact{ font-size:14px; line-height:1.4; margin-bottom:8px; }
+  .barriers{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .barrier-card{ background:#f6fbff; padding:8px 10px; border-radius:10px; display:flex; gap:10px; align-items:center; border:1px dashed rgba(70,130,180,0.12); }
+  .barrier-icon{ width:36px; height:36px; display:flex; align-items:center; justify-content:center; font-weight:700; border-radius:8px; color:#fff; }
+  .condom{ background:linear-gradient(180deg,#ffd3e6,#ff7fb2); }
+  .dental{ background:linear-gradient(180deg,#ffd7a6,#ffb86b); }
+  .gloves{ background:linear-gradient(180deg,#b8e0ff,#4b9cff); }
+  .bad{ background:linear-gradient(180deg,#ffb3b3,#ff6b6b); }
+  .bigscore{ font-size:28px; font-weight:800; color:var(--accent); }
+  .button { background:var(--accent); color:white; padding:8px 12px; border-radius:10px; border:none; font-weight:700; cursor:pointer; box-shadow:0 8px 18px rgba(75,156,255,0.16); }
+  .small { padding:6px 10px; font-size:13px; border-radius:8px; }
+  footer{ padding:12px 18px; text-align:center; font-size:12px; color:#123; opacity:0.8; border-top:1px solid rgba(10,30,60,0.04); }
+  .facts-list{ display:flex; flex-direction:column; gap:8px; }
+  .fact-bubble{ background:linear-gradient(180deg,#fff,#f6fbff); padding:8px 10px; border-radius:10px; border:1px solid rgba(70,130,180,0.06); font-size:13px; }
+  #introOverlay{ position:absolute; inset:0; background:rgba(8,18,36,0.55); display:flex; align-items:center; justify-content:center; z-index:40; }
+  .introCard{ width:720px; max-width:92%; background:white; border-radius:12px; padding:18px; box-shadow:0 20px 60px rgba(10,30,60,0.35); }
+  .introCard h2{ margin:0 0 8px 0; }
+  .tips{ display:flex; gap:12px; margin-top:10px; flex-direction:column; }
+  .tip{ background:linear-gradient(180deg,#fbfeff,#f2fbff); padding:10px; border-radius:10px; border:1px solid rgba(70,130,180,0.06); font-size:14px; }
+  @media (max-width:900px){ main{ flex-direction:column } .side{ max-width:100%; width:100% } }
+</style>
+</head>
+<body>
+<div class="wrap" role="application" aria-labelledby="gameTitle">
+  <header>
+    <div class="logo" aria-hidden="true">BB</div>
+    <div class="titlebox">
+      <h1 id="gameTitle">Barrier Battle</h1>
+      <p><strong class="slogan">Protection is power.</strong> Catch barriers and learn about respect, consent, and safer sex</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="game" aria-label="Game area">
+      <div class="hud">
+        <div class="stats">
+          <div class="stat">Time <span id="time">60</span> s</div>
+          <div class="stat">Respect <span id="score">0</span></div>
+          <div class="stat">Lives <span id="lives">3</span></div>
+        </div>
+        <div class="controls">
+          Controls: left/right arrows or mouse. Click the "Start Game" button in the info screen to begin. When finished, you can also start the game by pressing "Reset"
+        </div>
+      </div>
+
+      <canvas id="gameCanvas" width="600" height="420" aria-label="Barrier Battle playfield"></canvas>
+
+<img id="imgCondom" src="condom.png" style="display:none">
+<img id="imgDental" src="dentaldam.png" style="display:none">
+<img id="imgGloves" src="gloves.png" style="display:none">
+
+      <div style="display:flex; gap:12px; width:100%; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="font-size:13px; color:#234; opacity:0.85">Badge</div>
+          <div class="bigscore" id="bigBadge">—</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:13px; color:#234; opacity:0.85">Last message</div>
+          <div id="message" style="min-width:260px; max-width:420px; padding:8px 10px; border-radius:10px; background:#fff; box-shadow:0 4px 12px rgba(10,30,60,0.05); font-weight:600;">Catch a barrier to learn a fact</div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="side">
+      <div class="panel" aria-label="Instructions and message">
+        <h2>How to Play</h2>
+        <p class="fact">A 60-second round. Move the catcher to grab good items: condoms, dental dams, and gloves. Avoid bad items (in red). Each good catch gives Respect Points and a short safer sex fact</p>
+
+        <h2 style="margin-top:10px">Respect message</h2>
+        <p class="fact">Real confidence is checking in. Ask for and receive clear consent every time. Safer sex is caring for yourself and for your partner</p>
+
+        <h2 style="margin-top:10px">Safety barriers</h2>
+        <div class="barriers">
+          <div class="barrier-card"><div class="barrier-icon condom">C</div><div><strong>Condom</strong><div style="font-size:12px">Protects against many STIs and pregnancy</div></div></div>
+          <div class="barrier-card"><div class="barrier-icon dental">D</div><div><strong>Dental dam</strong><div style="font-size:12px">Barrier for oral sex</div></div></div>
+          <div class="barrier-card"><div class="barrier-icon gloves">G</div><div><strong>Gloves</strong><div style="font-size:12px">Used when needed for safety</div></div></div>
+        </div>
+
+        <h2 style="margin-top:10px">Quick tips</h2>
+        <ul style="padding-left:16px; margin:8px 0 0 0; font-size:13px">
+          <li>Make sure everyone says yes before anything happens</li>
+          <li>Use a new condom or dental dam each time and use it from start to finish</li>
+          <li>Check expiration dates and store barriers in a cool dry place</li>
+          <li>Communicate boundaries and check in during and after</li>
+        </ul>
+
+        <div style="margin-top:12px; display:flex; gap:8px; justify-content:space-between;">
+          <button id="pauseBtn" class="button small" disabled>Pause</button>
+          <button id="resetBtn" class="button small" style="background:var(--accent2)">Reset</button>
+        </div>
+      </div>
+
+      <div style="height:14px"></div>
+
+      <div class="panel" aria-label="Collected facts">
+        <h2>Facts you unlock</h2>
+        <div class="facts-list" id="factsList">
+          <div class="fact-bubble">Catch barriers to unlock friendly facts here</div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    Designed for WGSS 350. Promotes respect, consent, and safer sex
+  </footer>
+
+  <div id="introOverlay">
+    <div class="introCard" role="dialog" aria-labelledby="introTitle">
+      <h2 id="introTitle">Before you play</h2>
+      <p>Read these quick tips then click Start Game when you are ready</p>
+      <div class="tips">
+        <div class="tip"><strong>Consent matters</strong> Ask for and receive a clear yes from everyone involved. Consent can be taken back at any time</div>
+        <div class="tip"><strong>Use barriers correctly</strong> A new condom or dental dam works best. Use the right size and follow the package instructions</div>
+        <div class="tip"><strong>Check basics</strong> Look at expiration dates and do not use damaged or sticky barriers. Store them in a cool dry place</div>
+        <div class="tip"><strong>Be kind and listen</strong> Respect boundaries and check in with your partner after the moment for aftercare</div>
+      </div>
+      <div style="display:flex; justify-content:center; margin-top:14px; gap:12px;">
+        <button id="startGameIntro" class="button">Start Game</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let cw = canvas.width, ch = canvas.height;
+
+let running = false;
+let paused = false;
+let timeLeft = 60;
+let score = 0;
+let lives = 3;
+const bigBadge = document.getElementById('bigBadge');
+const msgEl = document.getElementById('message');
+const factsList = document.getElementById('factsList');
+
+const startBtn = document.getElementById('startGameIntro');
+const pauseBtn = document.getElementById('pauseBtn');
+const resetBtn = document.getElementById('resetBtn');
+
+document.getElementById('time').textContent = timeLeft;
+document.getElementById('score').textContent = score;
+document.getElementById('lives').textContent = lives;
+
+const player = {
+  w: 120,
+  h: 16,
+  x: cw/2 - 60,
+  y: ch - 36,
+  speed: 8,
+};
+
+const items = [];
+const spawnRateBase = 900;
+let lastSpawn = 0;
+
+const GOOD = ['condom','dental','gloves'];
+const BAD = ['no consent','pressure','unprotected'];
+
+const FACTS = {
+  condom: "Condoms reduce the risk of many STIs and pregnancy. Use a new one each time",
+  dental: "Dental dams are barriers for safer oral sex. They help protect against STIs",
+  gloves: "Gloves can be used for safety during certain activity or care",
+};
+
+const BAD_MESSAGES = {
+  noconsent: "Respect means pause and check in. Consent is required",
+  pressure: "Pressure is not consent. Stop and talk. Never coerce",
+  unprotected: "Unprotected sex raises risk. Using barriers helps protect everyone",
+};
+
+let mouseX = null;
+let isTouch = false;
+let keys = {};
+
+function rnd(min,max){ return Math.random()*(max-min)+min; }
+
+function spawnItem(){
+  const roll = Math.random();
+  let type;
+  if (roll < 0.62){
+    type = GOOD[Math.floor(Math.random() * GOOD.length)];
+  } else {
+    type = BAD[Math.floor(Math.random() * BAD.length)];
+  }
+  items.push({
+    type,
+    x: rnd(24, cw-24),
+    y: -24,
+    vy: rnd(1.2, 3.3),
+    size: rnd(28, 48),
+    rot: rnd(-0.2, 0.2),
+  });
+}
+
+function drawItem(it) {
+  ctx.save();
+  ctx.translate(it.x, it.y);
+  ctx.rotate(it.rot);
+  const s = it.size;
+
+  // Draw GOOD items with images
+  if (GOOD.includes(it.type)) {
+    let img = null;
+
+    if (it.type === 'condom') {
+      img = document.getElementById('imgCondom');
+    } else if (it.type === 'dental') {
+      img = document.getElementById('imgDental');
+    } else if (it.type === 'gloves') {
+      img = document.getElementById('imgGloves');
+    }
+
+    if (img) {
+      ctx.drawImage(img, -s, -s, s * 2, s * 2);
+    }
+
+  } else {
+    // BAD items still drawn as red shapes with labels
+    ctx.beginPath();
+    const r = s * 0.62;
+    for (let a = 0; a < Math.PI * 2; a += 0.6) {
+      const rr = r + Math.sin(a * 6 + it.x * 0.01) * r * 0.12;
+      ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
+    }
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(255,110,110,0.98)';
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = `${Math.round(s * 0.22)}px Inter, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const label = (it.type === 'no consent')
+      ? 'No Consent'
+      : (it.type === 'pressure'
+        ? 'Pressure'
+        : 'Unprotected');
+    ctx.fillText(label, 0, 0);
+  }
+
+  ctx.restore();
+}
+
+function roundedRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawPlayer(){
+  const p = player;
+  const g = ctx.createLinearGradient(p.x, p.y, p.x+p.w, p.y);
+  g.addColorStop(0, '#ffffff');
+  g.addColorStop(1, '#e6f4ff');
+  ctx.fillStyle = g;
+  roundedRect(ctx, p.x, p.y, p.w, p.h, 8);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(75,156,255,0.85)';
+  ctx.fillRect(p.x + 6, p.y - 6, p.w - 12, 6);
+  ctx.strokeStyle = 'rgba(10,30,60,0.06)';
+  ctx.stroke();
+}
+
+let lastTime = 0;
+function update(t){
+  if (!running || paused) { lastTime = t; requestAnimationFrame(update); return; }
+  const dt = Math.min(40, t - lastTime);
+  lastTime = t;
+
+  if (t - lastSpawn > spawnRateBase * (0.85 + Math.random()*0.7) * (0.6 + (timeLeft/60)*0.8) ){
+    spawnItem();
+    lastSpawn = t;
+  }
+
+  for (let i = items.length -1; i >=0; i--){
+    const it = items[i];
+    it.y += it.vy * (1 + (60-timeLeft)/120);
+    it.rot *= 1.01;
+    if (it.y + it.size*0.6 >= player.y && it.y - it.size*0.6 <= player.y + player.h){
+      if (it.x > player.x - 6 && it.x < player.x + player.w + 6){
+        handleCatch(it);
+        items.splice(i,1);
+        continue;
+      }
+    }
+    if (it.y - it.size > ch + 60){ items.splice(i,1); continue; }
+  }
+
+  if (mouseX !== null && isTouch === false){
+    player.x += (mouseX - player.x - player.w/2) * 0.24;
+  } else {
+    if (keys['ArrowLeft'] || keys['a']){ player.x -= player.speed; }
+    if (keys['ArrowRight'] || keys['d']){ player.x += player.speed; }
+  }
+  player.x = Math.max(6, Math.min(cw - player.w - 6, player.x));
+
+  draw();
+
+  requestAnimationFrame(update);
+}
+
+function draw(){
+  ctx.clearRect(0,0,cw,ch);
+  for (let i=0;i<6;i++){
+    ctx.beginPath();
+    ctx.fillStyle = `rgba(75,156,255,${0.02 + i*0.01})`;
+    ctx.arc((i*97 + 45) % cw, 40 + (i*62)%ch, 60 + (i*18), 0, Math.PI*2);
+    ctx.fill();
+  }
+  for (const it of items) drawItem(it);
+  drawPlayer();
+}
+
+function handleCatch(it){
+  if (GOOD.includes(it.type)){
+    score += 10;
+    document.getElementById('score').textContent = score;
+    const fact = FACTS[it.type] || "Good choice! You picked safety";
+    showMessage("+"+10+" " + fact, true);
+    addFactToList(fact);
+    showBadge(it.type);
+  } else {
+    lives -= 1;
+    document.getElementById('lives').textContent = lives;
+    const badMsg = BAD_MESSAGES[it.type] || "That was risky. Check in and protect";
+    showMessage("Lost life " + badMsg, false);
+    showBadge("bad");
+    score = Math.max(0, score-6);
+    document.getElementById('score').textContent = score;
+    if (lives <= 0){
+      endRound();
+    }
+  }
+}
+
+function showMessage(text, positive){
+  msgEl.textContent = text;
+  msgEl.style.background = positive ? "linear-gradient(90deg,#f6fff2,#e6fff0)" : "linear-gradient(90deg,#fff6f6,#ffecec)";
+  msgEl.style.border = positive ? "1px solid rgba(56,193,114,0.08)" : "1px solid rgba(255,107,107,0.06)";
+}
+function addFactToList(text){
+  const el = document.createElement('div');
+  el.className = 'fact-bubble';
+  el.textContent = text;
+  factsList.prepend(el);
+  while(factsList.children.length > 7) factsList.removeChild(factsList.lastChild);
+}
+function showBadge(type){
+  if (type === 'condom') { bigBadge.textContent = "Condom good!"; bigBadge.style.color = "#ff5a9e"; }
+  else if (type === 'dental') { bigBadge.textContent = "Dental dam good!"; bigBadge.style.color = "#ff9b4a"; }
+  else if (type === 'gloves') { bigBadge.textContent = "Gloves good!"; bigBadge.style.color = "#4b9cff"; }
+  else { bigBadge.textContent = "Watch out"; bigBadge.style.color = "#ff6b6b"; }
+}
+
+let timerInterval = null;
+function startGame(){
+  if (running) return;
+  running = true;
+  paused = false;
+  document.getElementById('time').textContent = timeLeft;
+  document.getElementById('score').textContent = score;
+  document.getElementById('lives').textContent = lives;
+  msgEl.textContent = "Catch barriers to unlock facts. Show respect and protect each other";
+  factsList.innerHTML = '<div class="fact-bubble">Round started good luck</div>';
+  bigBadge.textContent = "";
+  lastTime = performance.now();
+  timerInterval = setInterval(()=>{
+    if (!paused){
+      timeLeft -= 1;
+      document.getElementById('time').textContent = timeLeft;
+      if (timeLeft <= 0){ endRound(); }
+    }
+  }, 1000);
+  requestAnimationFrame(update);
+}
+
+function pauseGame(){
+  paused = !paused;
+  pauseBtn.textContent = paused ? "Resume" : "Pause";
+  if (paused) showMessage("Paused. Take a breath. Respect is calm communication", true);
+  else showMessage("Back to it protect and check in", true);
+}
+
+function resetGame(){
+  running = false;
+  paused = false;
+  clearInterval(timerInterval);
+  items.length = 0;
+  timeLeft = 60;
+  score = 0;
+  lives = 3;
+  bigBadge.textContent = "";
+  document.getElementById('time').textContent = timeLeft;
+  document.getElementById('score').textContent = score;
+  document.getElementById('lives').textContent = lives;
+  pauseBtn.disabled = true;
+  pauseBtn.textContent = "Pause";
+  msgEl.textContent = "Catch a barrier to learn a fact";
+  factsList.innerHTML = '<div class="fact-bubble">Ready when you are Remember consent first</div>';
+  draw();
+}
+
+function endRound(){
+  running = false;
+  paused = false;
+  clearInterval(timerInterval);
+  pauseBtn.disabled = true;
+  if (score >= 60){
+    const finalMessage = "Nice work! You practiced respect and safety. That is real power";
+    showMessage(finalMessage, true);
+    addFactToList(finalMessage);
+  } else {
+    const final = "Round over Respect " + score + " Lives " + lives;
+    showMessage(final, score > 0);
+    addFactToList("Tip: Aftercare and check-in matters. Respect continues after the moment");
+  }
+}
+
+canvas.addEventListener('mousemove', (e)=>{
+  const rect = canvas.getBoundingClientRect();
+  mouseX = e.clientX - rect.left;
+});
+canvas.addEventListener('mouseleave', ()=> mouseX = null);
+canvas.addEventListener('touchstart',(e)=>{
+  isTouch = true;
+  const rect = canvas.getBoundingClientRect();
+  mouseX = e.touches[0].clientX - rect.left;
+  player.x = mouseX - player.w/2;
+});
+canvas.addEventListener('touchmove',(e)=>{
+  const rect = canvas.getBoundingClientRect();
+  mouseX = e.touches[0].clientX - rect.left;
+  player.x = mouseX - player.w/2;
+});
+canvas.addEventListener('click',(e)=>{
+  if (!running) startGame();
+});
+
+window.addEventListener('keydown',(e)=>{
+  keys[e.key] = true;
+  if (e.key === ' ' && !running) { startGame(); }
+});
+window.addEventListener('keyup',(e)=>{ keys[e.key] = false; });
+
+startBtn.addEventListener('click', ()=>{
+  document.getElementById('introOverlay').style.display = 'none';
+  timeLeft = 60;
+  score = 0;
+  lives = 3;
+  document.getElementById('time').textContent = timeLeft;
+  document.getElementById('score').textContent = score;
+  document.getElementById('lives').textContent = lives;
+  pauseBtn.disabled = false;
+  startGame();
+});
+pauseBtn.addEventListener('click', pauseGame);
+resetBtn.addEventListener('click', resetGame);
+
+draw();
+</script>
+</body>
+</html>
